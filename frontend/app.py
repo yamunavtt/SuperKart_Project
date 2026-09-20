@@ -3,11 +3,19 @@ import pandas as pd
 import requests
 import os
 
+# --------------------------------------------------
+# Backend configuration
+# --------------------------------------------------
+
 BACKEND_URL = os.getenv(
     "BACKEND_URL",
     "http://localhost:5000"
 )
-# Configure the Streamlit page
+
+# --------------------------------------------------
+# Page configuration
+# --------------------------------------------------
+
 st.set_page_config(
     page_title="SuperKart Sales Forecast",
     page_icon="🛒",
@@ -21,15 +29,22 @@ st.write(
     "SuperKart machine learning model."
 )
 
-#Create Single and Batch Prediction tabs
+# --------------------------------------------------
+# Tabs
+# --------------------------------------------------
+
 single_tab, batch_tab = st.tabs(
     [
         "Single Prediction",
         "Batch Prediction"
     ]
+)
 
-#Single prediction interface
-    with single_tab:
+# ==================================================
+# Single prediction
+# ==================================================
+
+with single_tab:
 
     st.subheader("Single Sales Prediction")
 
@@ -77,7 +92,6 @@ single_tab, batch_tab = st.tabs(
             ]
         )
 
-
     with col2:
 
         store_size = st.selectbox(
@@ -101,7 +115,7 @@ single_tab, batch_tab = st.tabs(
         store_type = st.selectbox(
             "Store Type",
             [
-                "Departmental Store",
+                "Departmental Stores",
                 "Food Mart",
                 "Supermarket Type1",
                 "Supermarket Type2"
@@ -119,12 +133,15 @@ single_tab, batch_tab = st.tabs(
         product_type_category = st.selectbox(
             "Product Type Category",
             [
-                "Perishables",
-                "Non Perishables"
+                "Perishable",
+                "Non-Perishable"
             ]
         )
 
-#Send single prediction to Flask
+    # ----------------------------------------------
+    # Send request to backend
+    # ----------------------------------------------
+
     if st.button(
         "Predict Sales",
         type="primary"
@@ -178,7 +195,11 @@ single_tab, batch_tab = st.tabs(
                 f"Unable to connect to backend: {e}"
             )
 
-# Batch prediction interface
+
+# ==================================================
+# Batch prediction
+# ==================================================
+
 with batch_tab:
 
     st.subheader("Batch Sales Prediction")
@@ -193,7 +214,6 @@ with batch_tab:
         type=["csv"]
     )
 
-#Define the required columns
     required_columns = [
         "Product_Weight",
         "Product_Sugar_Content",
@@ -207,7 +227,6 @@ with batch_tab:
         "Product_Type_Category"
     ]
 
-#Read and validate uploaded CSV
     if uploaded_file is not None:
 
         batch_df = pd.read_csv(
@@ -240,8 +259,6 @@ with batch_tab:
                 "CSV structure is valid."
             )
 
-        if not missing_columns:
-
             if st.button(
                 "Run Batch Prediction",
                 type="primary"
@@ -266,9 +283,7 @@ with batch_tab:
 
                     if response.status_code == 200:
 
-                        predictions = (
-                            response.json()
-                        )
+                        predictions = response.json()
 
                         result_df = pd.DataFrame(
                             predictions
@@ -283,23 +298,7 @@ with batch_tab:
                             use_container_width=True
                         )
 
-                    else:
-
-                        st.error(
-                            f"Prediction failed: "
-                            f"{response.text}"
-                        )
-
-                except requests.exceptions.RequestException as e:
-
-                    st.error(
-                        f"Backend connection failed: {e}"
-                    )
-
-        # Allow prediction results to be downloaded
-            result_df = pd.DataFrame(predictions)
-
-                     csv_data = (
+                        csv_data = (
                             result_df
                             .to_csv(index=False)
                             .encode("utf-8")
@@ -313,6 +312,16 @@ with batch_tab:
                             ),
                             mime="text/csv"
                         )
-    
-    
-)
+
+                    else:
+
+                        st.error(
+                            f"Prediction failed: "
+                            f"{response.text}"
+                        )
+
+                except requests.exceptions.RequestException as e:
+
+                    st.error(
+                        f"Backend connection failed: {e}"
+                    )
